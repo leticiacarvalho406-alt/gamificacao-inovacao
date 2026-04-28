@@ -634,24 +634,25 @@ function cv(item, kws){
 }
 function pComp(r){r=(r||"").toLowerCase();if(r.indexOf("alta")>=0||r.indexOf("high")>=0)return"Alta";if(r.indexOf("m")>=0&&(r.indexOf("dia")>=0||r.indexOf("ed")>=0))return"Media";return"Baixa";}
 function pEtapa(r){
-  r = (r||"").toLowerCase().trim();
+  r=(r||"").toLowerCase().trim();
   if(!r) return "Estruturacao";
-  if(r.indexOf("medir result") >= 0 || r === "medir resultado") return "Medicao";
-  if(r.indexOf("medi") >= 0 && r.indexOf("result") >= 0)        return "Medicao";
-  if(r === "implementacao" || r === "implementação" || r === "instalacao" || r === "instalação")return "Implantacao";
-  if(r.indexOf("implement") >= 0 || r.indexOf("go-live") >= 0)  return "Implantacao";
-  if(r.indexOf("assinatura") >= 0 || r === "assinatura cont.")  return "Contrato";
-  if(r.indexOf("contrat") >= 0 || r.indexOf("poc") >= 0)        return "Contrato";
-  if(r === "cotacao" || r === "cotação")                         return "Cotacao";
-  if(r.indexOf("cota") >= 0)                                     return "Cotacao";
-  if(r === "estruturacao" || r === "estruturação")               return "Estruturacao";
-  if(r.indexOf("estrut") >= 0)                                   return "Estruturacao";
-  if(r.indexOf("conclu") >= 0 || r === "done")                  return "Concluido";
-  // Extra Monday status values
-  if(r.indexOf("instal") >= 0)                                   return "Implantacao";
-  if(r === "em andamento" || r === "andamento")                  return "Estruturacao";
+  // Exact values seen in the Monday board
+  if(r==="medir resultado"||r==="medir resultados") return "Medicao";
+  if(r==="implementacao"||r==="implementação")      return "Implantacao";
+  if(r==="instalacao"||r==="instalação")            return "Implantacao";
+  if(r==="assinatura cont."||r==="assinatura contrato"||r==="contrato fechado") return "Contrato";
+  if(r==="cotacao"||r==="cotação")                  return "Cotacao";
+  if(r==="estruturacao"||r==="estruturação")        return "Estruturacao";
+  // Partial matches
+  if(r.indexOf("medir")>=0||r.indexOf("medicao")>=0||r.indexOf("mediç")>=0) return "Medicao";
+  if(r.indexOf("implement")>=0||r.indexOf("instal")>=0||r.indexOf("go-live")>=0) return "Implantacao";
+  if(r.indexOf("assinatura")>=0||r.indexOf("contrat")>=0||r.indexOf("poc")>=0)   return "Contrato";
+  if(r.indexOf("cota")>=0)    return "Cotacao";
+  if(r.indexOf("estrut")>=0) return "Estruturacao";
+  if(r.indexOf("conclu")>=0||r==="done") return "Concluido";
   return "Estruturacao";
 }
+
 function pCargo(r){r=(r||"").toLowerCase();
   if(r.indexOf("s\u00eanior")>=0||r.indexOf("senior")>=0||r.indexOf(" sr")>=0)return"analista_sr";
   if(r.indexOf("j\u00fanior")>=0||r.indexOf("junior")>=0||r.indexOf(" jr")>=0)return"analista_jr";
@@ -661,76 +662,68 @@ function pCargo(r){r=(r||"").toLowerCase();
 }
 function mapItem(item){
   if(!window._colsLogged && item.column_values && item.column_values.length){
-    window._colsLogged = true;
-    console.log("[Monday] Colunas disponíveis:");
-    item.column_values.forEach(function(c){
-      console.log("  id:'"+c.id+"' text:'"+c.text+"' val:'"+String(c.value||"").substring(0,60)+"'");
-    });
+    window._colsLogged=true;
+    console.log("[Monday] IDs das colunas:");
+    item.column_values.forEach(function(c){console.log("  id:'"+c.id+"' text:'"+c.text+"'");});
   }
 
-  var comp      = pComp(cv(item,["complexidade","complexity","prioridade","complex"]));
-  var statusRaw = cv(item,["status"]) || cv(item,["etapa","stage","fase","phase"]) || "";
-  var etapaKey  = pEtapa(statusRaw);
-
-  // Responsável — coluna "analista responsavel" do Monday
-  var resp = cv(item,["analista responsavel","analista responsável","analista_responsavel",
-                       "responsavel","responsável","owner","assigned","pessoa"]) || "";
-  if(resp.indexOf(",") >= 0) resp = resp.split(",")[0].trim();
-  if(resp.indexOf(" e ")  >= 0) resp = resp.split(" e ")[0].trim();
-
-  var cargo = pCargo(cv(item,["cargo","role","funcao","nivel","função"]));
-
-  // ── Datas reais por etapa (coluna "data real XXX") ──────────
-  var drEstrut   = cvDate(item,["data real estrut","data_real_estrut","data estruturacao"]);
-  var drCotacao  = cvDate(item,["data real cotacao","data real cotação","data_real_cotacao","data cotacao"]);
-  var drContrato = cvDate(item,["data real contrato","data_real_contrato","data contrato","data real assinatura","assinatura cont"]);
-  var drImpl     = cvDate(item,["data real implementacao","data real implementação","data real impl","data_real_impl","data implementacao"]);
-  var drMedicao  = cvDate(item,["data real medicao","data real medição","data real medir","data_real_medicao","data medicao"]);
-
-  // A "data real" da etapa atual é o que define se caiu no trimestre
-  var etapaDateMap = {
-    "Estruturacao": drEstrut,
-    "Cotacao":      drCotacao,
-    "Contrato":     drContrato,
-    "Implantacao":  drImpl,
-    "Medicao":      drMedicao
-  };
-  var realDate = etapaDateMap[etapaKey] || null;
-
-  // Prazo previsto (para calcular se foi no prazo)
-  var prazoMap = {
-    "Estruturacao": cvDate(item,["prazo estrut","data prevista estrut","deadline estrut"]),
-    "Cotacao":      cvDate(item,["prazo cotacao","prazo cotação","data prevista cotacao"]),
-    "Contrato":     cvDate(item,["prazo contrato","data prevista contrato"]),
-    "Implantacao":  cvDate(item,["prazo implementacao","prazo implementação","data prevista impl"]),
-    "Medicao":      cvDate(item,["prazo medicao","prazo medição","data prevista medicao"])
-  };
-  var prazo = prazoMap[etapaKey] || cvDate(item,["prazo","deadline","data prevista","due"]) || null;
-
-  // onTime: data real <= prazo previsto
-  var onTime = null;
-  if(realDate && prazo){
-    onTime = new Date(realDate) <= new Date(prazo);
+  function getCol(kws){
+    for(var k=0;k<kws.length;k++){
+      var kw=kws[k].toLowerCase().replace(/ /g,"_");
+      var col=(item.column_values||[]).find(function(c){
+        return c.id.toLowerCase().indexOf(kw)>=0;
+      });
+      if(col&&col.text) return col.text;
+    }
+    return "";
   }
 
-  var pts = calcPts(cargo, etapaKey, comp);
+  function getDate(kws){
+    for(var k=0;k<kws.length;k++){
+      var kw=kws[k].toLowerCase().replace(/ /g,"_");
+      var col=(item.column_values||[]).find(function(c){
+        return c.id.toLowerCase().indexOf(kw)>=0;
+      });
+      if(col){
+        if(col.value){try{var v=JSON.parse(col.value);if(v&&v.date)return v.date;}catch(e){}}
+        if(col.text){var m=col.text.match(/(\d{4}-\d{2}-\d{2})/);if(m)return m[1];}
+      }
+    }
+    return null;
+  }
 
-  return {
-    id:         item.id,
-    name:       item.name,
-    etapaKey:   etapaKey,
-    etapa:      ETAPA_KEY[etapaKey] || etapaKey,
-    comp:       comp,
-    resp:       resp,
-    cargo:      cargo,
-    dl:         prazo,
-    realDate:   realDate,     // data real de conclusão da etapa
-    onTime:     onTime,
-    pts:        pts,
-    updatedAt:  item.updated_at,
-    createdAt:  item.created_at,
-    // raw date refs for debugging
-    _dates: {drEstrut:drEstrut,drCotacao:drCotacao,drContrato:drContrato,drImpl:drImpl,drMedicao:drMedicao}
+  var statusRaw=getCol(["status"])||"";
+  var comp=pComp(getCol(["complexidade","complexity"]));
+  var resp=getCol(["analista_responsavel","analista_respons","responsavel"])||"";
+  if(resp.indexOf(",")>=0) resp=resp.split(",")[0].trim();
+  if(resp.indexOf(" e ")>=0) resp=resp.split(" e ")[0].trim();
+  var cargo=pCargo(getCol(["cargo","role","funcao","nivel"]));
+
+  var drEstrut  =getDate(["data_real_estruturacao","data_real_estrutu"]);
+  var drCotacao =getDate(["data_real_cotacao","data_real_cota"]);
+  var drContrato=getDate(["data_real_contrato_fechado","data_real_contrato"]);
+  var drImpl    =getDate(["data_real_implantacao","data_real_impl"]);
+  var drMedicao =getDate(["data_real_medicao_resultados","data_real_medicao"]);
+
+  var dpEstrut  =getDate(["fim_previsto_estruturacao"]);
+  var dpCotacao =getDate(["fim_previsto_cotacao"]);
+  var dpContrato=getDate(["fim_previsto_contrato_fechado"]);
+  var dpImpl    =getDate(["fim_previsto_implantacao"]);
+  var dpMedicao =getDate(["fim_previsto_medicao_resultados"]);
+
+  var etapaKey=pEtapa(statusRaw);
+  var realDate={Estruturacao:drEstrut,Cotacao:drCotacao,Contrato:drContrato,Implantacao:drImpl,Medicao:drMedicao}[etapaKey]||null;
+  var prazo   ={Estruturacao:dpEstrut,Cotacao:dpCotacao,Contrato:dpContrato,Implantacao:dpImpl,Medicao:dpMedicao}[etapaKey]||null;
+  var onTime=null;
+  if(realDate&&prazo){onTime=new Date(realDate)<=new Date(prazo);}
+
+  return{
+    id:item.id,name:item.name,
+    etapaKey:etapaKey,etapa:ETAPA_KEY[etapaKey]||etapaKey,
+    comp:comp,resp:resp,cargo:cargo,
+    dl:prazo,realDate:realDate,onTime:onTime,
+    pts:calcPts(cargo,etapaKey,comp),
+    updatedAt:item.updated_at,createdAt:item.created_at
   };
 }
 
@@ -755,12 +748,12 @@ function inCurrQ(d){
 }
 function userProjects(name){
   if(!name) return S.projects;
-  if(isMgr(name)) return S.projects; // managers veem tudo
-  var n = name.toLowerCase().trim();
+  if(isMgr(name)) return S.projects;
+  var n=name.toLowerCase().trim();
   return S.projects.filter(function(p){
-    var r = (p.resp||"").toLowerCase().trim();
-    // Match exato ou contém
-    return r === n || r.indexOf(n) >= 0 || n.indexOf(r) >= 0;
+    var r=(p.resp||"").toLowerCase().trim();
+    // Exact match OR name is contained in responsible field
+    return r===n || r.indexOf(n)>=0 || n.indexOf(r)>=0;
   });
 }
 function calcStats(projs, role){
