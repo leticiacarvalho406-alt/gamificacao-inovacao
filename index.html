@@ -310,6 +310,33 @@ body{font-family:'Inter',sans-serif;background:#0F0C29;color:#fff;min-height:100
 .rib-meta span{display:flex;align-items:center;gap:6px}
 @media(max-width:700px){.roadmap-steps-row{grid-template-columns:repeat(3,1fr)}.trilha-sel-grid{grid-template-columns:1fr}}
 
+
+/* ── AVATAR CREATOR ── */
+.avatar-page{display:flex;flex-direction:column;gap:20px}
+.avatar-preview-wrap{display:flex;align-items:center;gap:24px;padding:24px;background:rgba(255,255,255,.055);border-radius:16px;border:1px solid rgba(255,255,255,.09)}
+.avatar-canvas-wrap{position:relative;width:140px;height:140px;flex-shrink:0}
+.avatar-canvas-wrap svg{width:140px;height:140px;border-radius:50%;box-shadow:0 0 0 4px rgba(124,58,237,.4),0 8px 32px rgba(0,0,0,.4)}
+.avatar-preview-info{flex:1}
+.avatar-preview-name{font-size:20px;font-weight:800;color:#fff;margin-bottom:4px}
+.avatar-preview-role{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:14px}
+.btn-save-avatar{padding:10px 24px;background:linear-gradient(135deg,#7C3AED,#EC4899);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 4px 16px rgba(236,72,153,.35);transition:.2s}
+.btn-save-avatar:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(236,72,153,.5)}
+.avatar-saved-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25);border-radius:20px;font-size:12px;font-weight:600;color:#34D399;margin-top:10px}
+
+.avatar-controls{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.av-section{background:rgba(255,255,255,.04);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,.07)}
+.av-section-title{font-size:12px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.av-section-title i{color:#A78BFA}
+.av-options{display:flex;flex-wrap:wrap;gap:8px}
+.av-opt{padding:7px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);font-size:12.5px;color:rgba(255,255,255,.6);cursor:pointer;transition:.18s;font-family:'Inter',sans-serif;font-weight:500}
+.av-opt:hover{border-color:rgba(167,139,250,.4);color:#fff;background:rgba(124,58,237,.1)}
+.av-opt.sel{border-color:#A78BFA;background:rgba(124,58,237,.2);color:#fff;font-weight:600}
+.av-colors{display:flex;flex-wrap:wrap;gap:8px}
+.av-color{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:.18s;flex-shrink:0}
+.av-color:hover{transform:scale(1.15)}
+.av-color.sel{border-color:#fff;transform:scale(1.15);box-shadow:0 0 0 2px rgba(124,58,237,.5)}
+@media(max-width:700px){.avatar-controls{grid-template-columns:1fr}.avatar-preview-wrap{flex-direction:column;text-align:center}}
+
 </style>
 </head>
 <body>
@@ -324,20 +351,9 @@ body{font-family:'Inter',sans-serif;background:#0F0C29;color:#fff;min-height:100
       <div class="ltag">Sistema de Gamificação — Equipe Inovação</div>
     </div>
     <div class="fg">
-      <label><i class="fas fa-user"></i> Perfil de Acesso</label>
-      <select id="loginRole">
-        <option value="">Selecione seu cargo</option>
-        <option value="assistente1">Assistente I</option>
-        <option value="assistente2">Assistente II</option>
-        <option value="analista_jr">Analista Júnior</option>
-        <option value="analista_sr">Analista Sênior</option>
-        <option value="gerente">Gerente</option>
-        <option value="diretor">Diretor</option>
-      </select>
-    </div>
-    <div class="fg">
       <label><i class="fas fa-id-card"></i> Seu Nome</label>
-      <input type="text" id="loginName" placeholder="Digite seu nome completo"/>
+      <input type="text" id="loginName" placeholder="Digite seu nome completo (igual ao Monday)"/>
+      <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:6px"><i class="fas fa-info-circle"></i> Digite exatamente como está no Monday.com</div>
     </div>
     <button class="btn-login" onclick="doLogin()"><i class="fas fa-rocket"></i> Entrar no Sistema</button>
   </div>
@@ -365,6 +381,7 @@ body{font-family:'Inter',sans-serif;background:#0F0C29;color:#fff;min-height:100
     </nav>
     <div class="sb-foot">
       <button class="btn-sync" onclick="doSync()"><i class="fas fa-sync-alt" id="sIcon"></i><span>Sincronizar Monday</span></button>
+      <button class="ni" id="n-avatar" onclick="go('avatar')"><i class="fas fa-user-circle"></i><span>Meu Avatar</span></button>
       <button class="ni out" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i><span>Sair</span></button>
     </div>
   </aside>
@@ -440,6 +457,25 @@ body{font-family:'Inter',sans-serif;background:#0F0C29;color:#fff;min-height:100
       <div id="p-validacao" class="page">
         <div class="ph"><h2><i class="fas fa-check-double"></i> Validação de Bônus</h2><p>Revise e aprove os bônus calculados</p></div>
         <div class="vl" id="valList"></div>
+      </div>
+
+
+      <div id="p-avatar" class="page">
+        <div class="ph"><h2><i class="fas fa-user-circle"></i> Meu Avatar</h2><p>Personalize seu perfil com um avatar único</p></div>
+        <div class="avatar-page">
+          <div class="avatar-preview-wrap">
+            <div class="avatar-canvas-wrap">
+              <svg id="avatarSVG" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
+            </div>
+            <div class="avatar-preview-info">
+              <div class="avatar-preview-name" id="avPrevName">—</div>
+              <div class="avatar-preview-role" id="avPrevRole">—</div>
+              <button class="btn-save-avatar" onclick="saveAvatar()"><i class="fas fa-check"></i> Salvar Avatar</button>
+              <div id="avSavedBadge" class="avatar-saved-badge hidden"><i class="fas fa-check-circle"></i> Avatar salvo!</div>
+            </div>
+          </div>
+          <div class="avatar-controls" id="avatarControls"></div>
+        </div>
       </div>
 
       <div id="p-relatorio" class="page">
@@ -559,13 +595,15 @@ function cv(item,kws){
   return "";
 }
 function pComp(r){r=(r||"").toLowerCase();if(r.indexOf("alta")>=0||r.indexOf("high")>=0)return"Alta";if(r.indexOf("m")>=0&&(r.indexOf("dia")>=0||r.indexOf("ed")>=0))return"Media";return"Baixa";}
-function pEtapa(r){r=(r||"").toLowerCase();
+function pEtapa(r){r=(r||"").toLowerCase().trim();
+  // Exact matches first (from Monday Status column)
+  if(r==="medir resultado"||r==="medir"||r.indexOf("medir result")>=0)return"Medicao";
+  if(r==="implementacao"||r==="implementação"||r.indexOf("implement")>=0||r.indexOf("go-live")>=0)return"Implantacao";
+  if(r==="assinatura cont."||r==="assinatura contrato"||r==="contrato"||r.indexOf("contrat")>=0||r.indexOf("assinatura")>=0||r.indexOf("poc")>=0||r.indexOf("assinado")>=0)return"Contrato";
+  if(r==="cotacao"||r==="cotação"||r.indexOf("cota")>=0)return"Cotacao";
+  if(r==="estruturacao"||r==="estruturação"||r.indexOf("estrut")>=0)return"Estruturacao";
   if(r.indexOf("medi")>=0||r.indexOf("result")>=0)return"Medicao";
-  if(r.indexOf("implant")>=0||r.indexOf("go-live")>=0)return"Implantacao";
-  if(r.indexOf("contrat")>=0||r.indexOf("poc")>=0||r.indexOf("assinado")>=0)return"Contrato";
-  if(r.indexOf("cota")>=0)return"Cotacao";
-  if(r.indexOf("estrut")>=0)return"Estruturacao";
-  if(r.indexOf("conclu")>=0||r.indexOf("done")>=0)return"Concluido";
+  if(r.indexOf("conclu")>=0||r.indexOf("done")>=0||r.indexOf("finaliz")>=0)return"Concluido";
   return"Estruturacao";
 }
 function pCargo(r){r=(r||"").toLowerCase();
@@ -582,11 +620,17 @@ function mapItem(item){
     console.log("[Monday] Colunas disponíveis:");
     item.column_values.forEach(function(c){console.log("  id:'"+c.id+"' text:'"+c.text+"' value:'"+String(c.value).substring(0,50)+"'");});
   }
-  var comp=pComp(cv(item,["complexidade","complexity","prioridade"]));
-  var etapaKey=pEtapa(cv(item,["etapa","stage","status","fase","phase"]));
-  var resp=cv(item,["respons","owner","assigned","pessoa"])||"";
+  var comp=pComp(cv(item,["complexidade","complexity","prioridade","complex"]));
+  // STATUS column is primary source for etapa
+  var statusRaw=cv(item,["status"])||cv(item,["etapa","stage","fase","phase"])||"";
+  var etapaKey=pEtapa(statusRaw);
+  // Responsible: "analista responsavel" or "pessoa" or "owner"
+  var resp=cv(item,["analista","responsavel","responsável","owner","assigned","pessoa"])||"";
+  // Clean up resp - remove extra names, take first person
+  if(resp.indexOf(",")>=0)resp=resp.split(",")[0].trim();
+  if(resp.indexOf(" e ")>=0)resp=resp.split(" e ")[0].trim();
   var cargo=pCargo(cv(item,["cargo","role","fun","nivel"]));
-  var dl=cv(item,["prazo","deadline","data prevista","due"]);
+  var dl=cv(item,["prazo","deadline","data prevista","due","data"]);
   var status=(cv(item,["status","estado"])||"").toLowerCase();
   var done=status.indexOf("done")>=0||status.indexOf("conclu")>=0||status.indexOf("finaliz")>=0;
   var onTime=null;
@@ -606,7 +650,18 @@ function curTier(role,pts){var t=BT[role];if(!t)return null;var ct=t[0];for(var 
 function nextTier(role,pts){return(BT[role]||[]).find(function(x){return pts<x.min;})||null;}
 function currQ(){var n=new Date();return"Q"+Math.ceil((n.getMonth()+1)/3)+" "+n.getFullYear();}
 function inCurrQ(d){if(!d)return true;var n=new Date(),q=Math.ceil((n.getMonth()+1)/3);var s=new Date(n.getFullYear(),(q-1)*3,1),e=new Date(n.getFullYear(),q*3,0,23,59,59);return new Date(d)>=s&&new Date(d)<=e;}
-function userProjects(name){if(!name)return S.projects;var n=name.toLowerCase();return S.projects.filter(function(p){return p.resp.toLowerCase().indexOf(n)>=0;});}
+function userProjects(name){
+  if(!name)return S.projects;
+  var n=name.toLowerCase().trim();
+  // Managers see all projects
+  var mgrs=MANAGERS.map(function(m){return m.toLowerCase();});
+  if(mgrs.indexOf(n)>=0||n==="alan kadri")return S.projects;
+  // Others: exact match on responsible name
+  return S.projects.filter(function(p){
+    var r=(p.resp||"").toLowerCase().trim();
+    return r===n||r.indexOf(n)>=0||n.indexOf(r)>=0;
+  });
+}
 function calcStats(projs,role){
   var qp=projs.filter(function(p){return inCurrQ(p.updatedAt);});
   var totalPts=qp.reduce(function(s,p){return s+p.pts;},0);
@@ -654,14 +709,29 @@ async function doSync(){
 }
 
 // ── LOGIN ─────────────────────────────────────────
+// Managers/directors with full access
+var MANAGERS=["Luciana Gomes","Alan Kadri"];
+
+function detectRole(name){
+  var n=name.toLowerCase();
+  // Check if manager/director
+  for(var i=0;i<MANAGERS.length;i++){
+    if(MANAGERS[i].toLowerCase()===n)return"gerente";
+  }
+  // Default: analista_jr (scoring will adapt based on projects)
+  return"analista_jr";
+}
+
 function doLogin(){
-  var role=document.getElementById("loginRole").value;
   var name=document.getElementById("loginName").value.trim();
-  if(!role){notif("\u26a0\ufe0f Selecione seu cargo!");return;}
-  if(!name){notif("\u26a0\ufe0f Digite seu nome!");return;}
+  if(!name){notif("⚠️ Digite seu nome!");return;}
+  var role=detectRole(name);
+  // Special: Alan Kadri is director
+  if(name.toLowerCase()==="alan kadri")role="diretor";
   S.user={role:role,name:name};
   startApp();
 }
+
 function doLogout(){
   if(S.timer)clearInterval(S.timer);
   S.user=null;
@@ -704,6 +774,7 @@ function refresh(n){
   else if(n==="equipe")rEquipe();
   else if(n==="validacao")rValidacao();
   else if(n==="relatorio")rRelatorio();
+  else if(n==="avatar")rAvatar();
 }
 function refreshCurrent(){var pg=document.querySelector(".page.act");if(pg)refresh(pg.id.replace("p-",""));}
 function toggleSB(){document.getElementById("sb").classList.toggle("col");}
@@ -1124,6 +1195,192 @@ function eBadge(sk){return{"Estruturacao":"pe-e1","Cotacao":"pe-e2","Contrato":"
 function cBadge(c){return{"Baixa":"pb-low","Media":"pb-med","Alta":"pb-hi"}[c]||"";}
 function notif(msg){var n=document.createElement("div");n.className="notif";n.textContent=msg;document.body.appendChild(n);setTimeout(function(){n.remove();},3500);}
 
+
+
+// ── AVATAR CREATOR ────────────────────────────────
+var AV = {
+  skin: "#F5C5A3",
+  hair: "short",
+  hairColor: "#3D2B1F",
+  eyes: "normal",
+  eyeColor: "#2C3E50",
+  mouth: "smile",
+  top: "#7C3AED",
+  bg: "#1E1B4B",
+  accessory: "none"
+};
+var AV_SAVED = false;
+
+var AV_OPTIONS = {
+  skin: ["#FDDBB4","#F5C5A3","#E8A87C","#C68642","#8D5524","#4A2912"],
+  hairColor: ["#3D2B1F","#1C1C1C","#8B4513","#D4A017","#C0392B","#7F8C8D","#F0E6D3","#7C3AED"],
+  eyeColor: ["#2C3E50","#1ABC9C","#3498DB","#8E44AD","#27AE60","#E67E22","#95A5A6"],
+  top: ["#7C3AED","#EC4899","#10B981","#3B82F6","#F59E0B","#EF4444","#1E293B","#0EA5E9","#8B5CF6","#F97316"],
+  bg: ["#1E1B4B","#0F172A","#134E4A","#450A0A","#1E3A5F","#3B0764","#1A2E05","#1C1917"]
+};
+
+function drawAvatar(cfg, targetId) {
+  var svg = document.getElementById(targetId || "avatarSVG");
+  if (!svg) return;
+  var c = cfg || AV;
+
+  var hairPaths = {
+    short: '<path d="M30,42 Q30,18 50,18 Q70,18 70,42 Q68,28 50,26 Q32,28 30,42Z" fill="'+c.hairColor+'"/>',
+    long:  '<path d="M28,45 Q28,16 50,16 Q72,16 72,45 Q70,30 50,28 Q30,30 28,45Z" fill="'+c.hairColor+'"/><rect x="28" y="55" width="6" height="30" rx="3" fill="'+c.hairColor+'"/><rect x="66" y="55" width="6" height="30" rx="3" fill="'+c.hairColor+'"/>',
+    curly: '<path d="M29,44 Q29,17 50,17 Q71,17 71,44 Q69,29 50,27 Q31,29 29,44Z" fill="'+c.hairColor+'"/><circle cx="30" cy="40" r="6" fill="'+c.hairColor+'"/><circle cx="37" cy="30" r="5" fill="'+c.hairColor+'"/><circle cx="50" cy="26" r="5" fill="'+c.hairColor+'"/><circle cx="63" cy="30" r="5" fill="'+c.hairColor+'"/><circle cx="70" cy="40" r="6" fill="'+c.hairColor+'"/>',
+    bun:   '<path d="M31,44 Q31,19 50,19 Q69,19 69,44 Q67,30 50,28 Q33,30 31,44Z" fill="'+c.hairColor+'"/><circle cx="50" cy="20" r="10" fill="'+c.hairColor+'"/>',
+    none:  '',
+    ponytail: '<path d="M30,43 Q30,18 50,18 Q70,18 70,43 Q68,29 50,27 Q32,29 30,43Z" fill="'+c.hairColor+'"/><rect x="47" y="18" width="6" height="28" rx="3" fill="'+c.hairColor+'"/>',
+  };
+
+  var eyePaths = {
+    normal: '<ellipse cx="41" cy="52" rx="4.5" ry="4" fill="white"/><circle cx="41" cy="52" r="2.8" fill="'+c.eyeColor+'"/><circle cx="42" cy="51" r="1" fill="white"/><ellipse cx="59" cy="52" rx="4.5" ry="4" fill="white"/><circle cx="59" cy="52" r="2.8" fill="'+c.eyeColor+'"/><circle cx="60" cy="51" r="1" fill="white"/>',
+    happy: '<path d="M37,52 Q41,55 45,52" stroke="'+c.eyeColor+'" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M55,52 Q59,55 63,52" stroke="'+c.eyeColor+'" stroke-width="2" fill="none" stroke-linecap="round"/>',
+    wink: '<ellipse cx="41" cy="52" rx="4.5" ry="4" fill="white"/><circle cx="41" cy="52" r="2.8" fill="'+c.eyeColor+'"/><circle cx="42" cy="51" r="1" fill="white"/><path d="M55,52 Q59,55 63,52" stroke="'+c.eyeColor+'" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+    cool: '<rect x="36" y="49" width="9" height="6" rx="3" fill="#1C1C1C"/><rect x="37.5" y="50" width="6" height="4" rx="2" fill="'+c.eyeColor+'"/><rect x="54" y="49" width="9" height="6" rx="3" fill="#1C1C1C"/><rect x="55.5" y="50" width="6" height="4" rx="2" fill="'+c.eyeColor+'"/>',
+    stars: '<text x="38" y="55" font-size="8" fill="'+c.eyeColor+'">★</text><text x="56" y="55" font-size="8" fill="'+c.eyeColor+'">★</text>',
+  };
+
+  var mouthPaths = {
+    smile: '<path d="M41,63 Q50,70 59,63" stroke="#C0392B" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+    grin:  '<path d="M40,63 Q50,72 60,63" stroke="#C0392B" stroke-width="2.5" fill="#E74C3C" stroke-linecap="round"/><path d="M44,67 Q50,71 56,67" stroke="white" stroke-width="1.5" fill="none"/>',
+    neutral:'<line x1="43" y1="65" x2="57" y2="65" stroke="#C0392B" stroke-width="2.5" stroke-linecap="round"/>',
+    open:  '<ellipse cx="50" cy="65" rx="8" ry="5" fill="#C0392B"/><ellipse cx="50" cy="65" rx="6" ry="3" fill="#922B21"/>',
+  };
+
+  var accessories = {
+    none: '',
+    glasses: '<rect x="33" y="48" width="13" height="9" rx="4" stroke="#7C3AED" stroke-width="2" fill="none"/><rect x="54" y="48" width="13" height="9" rx="4" stroke="#7C3AED" stroke-width="2" fill="none"/><line x1="46" y1="52" x2="54" y2="52" stroke="#7C3AED" stroke-width="1.5"/>',
+    headband: '<rect x="26" y="36" width="48" height="7" rx="3.5" fill="'+c.top+'" opacity="0.9"/>',
+    hat: '<ellipse cx="50" cy="30" rx="26" ry="5" fill="'+c.hairColor+'"/><rect x="33" y="18" width="34" height="14" rx="4" fill="'+c.hairColor+'"/>',
+    earrings: '<circle cx="27" cy="58" r="3" fill="#F59E0B"/><circle cx="73" cy="58" r="3" fill="#F59E0B"/>',
+  };
+
+  svg.innerHTML =
+    // BG
+    '<circle cx="50" cy="50" r="50" fill="'+c.bg+'"/>'+
+    // Shoulders/body
+    '<ellipse cx="50" cy="95" rx="28" ry="18" fill="'+c.top+'"/>'+
+    '<rect x="22" y="88" width="56" height="15" rx="8" fill="'+c.top+'"/>'+
+    // Neck
+    '<rect x="43" y="72" width="14" height="14" rx="5" fill="'+c.skin+'"/>'+
+    // Head
+    '<ellipse cx="50" cy="50" rx="22" ry="24" fill="'+c.skin+'"/>'+
+    // Hair behind
+    (hairPaths[c.hair]||'')+
+    // Ears
+    '<ellipse cx="28" cy="52" rx="4" ry="5" fill="'+c.skin+'"/>'+
+    '<ellipse cx="72" cy="52" rx="4" ry="5" fill="'+c.skin+'"/>'+
+    // Eyes
+    (eyePaths[c.eyes]||'')+
+    // Nose
+    '<path d="M48,57 Q50,61 52,57" stroke="'+shadeColor(c.skin,-20)+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>'+
+    // Mouth
+    (mouthPaths[c.mouth]||'')+
+    // Eyebrows
+    '<path d="M37,47 Q41,44 45,47" stroke="'+c.hairColor+'" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+    '<path d="M55,47 Q59,44 63,47" stroke="'+c.hairColor+'" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+    // Accessory
+    (accessories[c.accessory]||'');
+}
+
+function shadeColor(color, percent){
+  var num=parseInt(color.replace('#',''),16),
+    amt=Math.round(2.55*percent),
+    R=(num>>16)+amt, G=(num>>8&0x00FF)+amt, B=(num&0x0000FF)+amt;
+  return '#'+(0x1000000+(Math.max(0,Math.min(255,R)))*0x10000+(Math.max(0,Math.min(255,G)))*0x100+Math.max(0,Math.min(255,B))).toString(16).slice(1);
+}
+
+function rAvatar(){
+  if(!S.user)return;
+  // Load saved avatar
+  try{
+    var saved=localStorage.getItem("av_"+S.user.name);
+    if(saved)Object.assign(AV,JSON.parse(saved));
+  }catch(e){}
+
+  document.getElementById("avPrevName").textContent=S.user.name;
+  document.getElementById("avPrevRole").textContent=RL[S.user.role]||S.user.role;
+
+  buildAvatarControls();
+  drawAvatar(AV,"avatarSVG");
+}
+
+function buildAvatarControls(){
+  var sections=[
+    {id:"skin",  label:"Tom de pele",   icon:"fa-hand-paper",  type:"color",  key:"skin",  opts:AV_OPTIONS.skin},
+    {id:"hair",  label:"Cabelo",        icon:"fa-cut",         type:"btn",    key:"hair",  opts:[{v:"short",l:"Curto"},{v:"long",l:"Longo"},{v:"curly",l:"Cacheado"},{v:"bun",l:"Coque"},{v:"ponytail",l:"Rabo"},{v:"none",l:"Careca"}]},
+    {id:"hcol",  label:"Cor do cabelo", icon:"fa-palette",     type:"color",  key:"hairColor", opts:AV_OPTIONS.hairColor},
+    {id:"eyes",  label:"Olhos",         icon:"fa-eye",         type:"btn",    key:"eyes",  opts:[{v:"normal",l:"Normal"},{v:"happy",l:"Feliz"},{v:"wink",l:"Piscadela"},{v:"cool",l:"Cool"},{v:"stars",l:"Estrelas"}]},
+    {id:"ecol",  label:"Cor dos olhos", icon:"fa-circle",      type:"color",  key:"eyeColor", opts:AV_OPTIONS.eyeColor},
+    {id:"mouth", label:"Boca",          icon:"fa-smile",       type:"btn",    key:"mouth", opts:[{v:"smile",l:"Sorriso"},{v:"grin",l:"Risada"},{v:"neutral",l:"Neutro"},{v:"open",l:"Aberta"}]},
+    {id:"acc",   label:"Acessório",     icon:"fa-glasses",     type:"btn",    key:"accessory", opts:[{v:"none",l:"Nenhum"},{v:"glasses",l:"Óculos"},{v:"headband",l:"Faixa"},{v:"hat",l:"Chapéu"},{v:"earrings",l:"Brinco"}]},
+    {id:"top",   label:"Cor da roupa",  icon:"fa-tshirt",      type:"color",  key:"top",   opts:AV_OPTIONS.top},
+    {id:"bg",    label:"Fundo",         icon:"fa-circle",      type:"color",  key:"bg",    opts:AV_OPTIONS.bg},
+  ];
+
+  var html="";
+  sections.forEach(function(sec){
+    html+='<div class="av-section"><div class="av-section-title"><i class="fas '+sec.icon+'"></i>'+sec.label+'</div>';
+    if(sec.type==="color"){
+      html+='<div class="av-colors">';
+      sec.opts.forEach(function(col){
+        html+='<div class="av-color'+(AV[sec.key]===col?" sel":"")+'" style="background:'+col+'" onclick="setAV(\''+sec.key+'\',\''+col+'\')"></div>';
+      });
+      html+='</div>';
+    } else {
+      html+='<div class="av-options">';
+      sec.opts.forEach(function(opt){
+        html+='<button class="av-opt'+(AV[sec.key]===opt.v?" sel":"")+'" onclick="setAV(\''+sec.key+'\',\''+opt.v+'\')">'+opt.l+'</button>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+
+  document.getElementById("avatarControls").innerHTML=html;
+}
+
+function setAV(key, val){
+  AV[key]=val;
+  buildAvatarControls();
+  drawAvatar(AV,"avatarSVG");
+  // Also update sidebar avatar if it's SVG
+  updateSidebarAvatar();
+}
+
+function saveAvatar(){
+  try{localStorage.setItem("av_"+S.user.name, JSON.stringify(AV));}catch(e){}
+  AV_SAVED=true;
+  var badge=document.getElementById("avSavedBadge");
+  if(badge)badge.classList.remove("hidden");
+  updateSidebarAvatar();
+  notif("✅ Avatar salvo!");
+}
+
+function updateSidebarAvatar(){
+  var el=document.getElementById("sbAv");
+  if(!el)return;
+  try{
+    var saved=localStorage.getItem("av_"+S.user.name);
+    if(saved){
+      var av=JSON.parse(saved);
+      // Replace text avatar with SVG mini
+      el.innerHTML='<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:44px;height:44px;border-radius:12px"></svg>';
+      var miniSvg=el.querySelector("svg");
+      if(miniSvg){miniSvg.id="sbAvSVG";drawAvatar(av,"sbAvSVG");}
+      return;
+    }
+  }catch(e){}
+}
+
+function loadSavedAvatar(){
+  if(!S.user)return;
+  try{
+    var saved=localStorage.getItem("av_"+S.user.name);
+    if(saved){Object.assign(AV,JSON.parse(saved));updateSidebarAvatar();}
+  }catch(e){}
+}
 
 </script>
 </body>
