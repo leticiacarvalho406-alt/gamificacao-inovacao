@@ -507,7 +507,7 @@ let S={user:null,projects:[],approvals:{},timer:null};
 
 // ── MONDAY API ─────────────────────────────────────
 async function fetchBoard(){
-  var q="{boards(ids:[BOARD_ID_PLACEHOLDER]){items_page(limit:200){items{id name state created_at updated_at column_values{id title text value}}}}}";
+  var q="{boards(ids:[BOARD_ID_PLACEHOLDER]){items_page(limit:200){items{id name state created_at updated_at column_values{id text value}}}}}";
   // First try to get board ID from server config
   var boardId="4879086777";
   try{
@@ -541,8 +541,20 @@ async function fetchBoard(){
 // ── PARSE ─────────────────────────────────────────
 function cv(item,kws){
   for(var i=0;i<kws.length;i++){
-    var c=(item.column_values||[]).find(function(c){return c.title.toLowerCase().indexOf(kws[i])>=0||c.id.toLowerCase().indexOf(kws[i])>=0;});
+    var kw=kws[i].toLowerCase();
+    var c=(item.column_values||[]).find(function(c){
+      // Match by column id only (title removed from API v2024-01)
+      return c.id.toLowerCase().indexOf(kw)>=0;
+    });
     if(c&&c.text)return c.text;
+  }
+  // Fallback: try matching by value content
+  for(var j=0;j<kws.length;j++){
+    var kw2=kws[j].toLowerCase();
+    var c2=(item.column_values||[]).find(function(c){
+      return c.id.toLowerCase().indexOf(kw2)>=0||(c.text&&c.text.toLowerCase().indexOf(kw2)>=0);
+    });
+    if(c2&&c2.text)return c2.text;
   }
   return "";
 }
@@ -564,6 +576,12 @@ function pCargo(r){r=(r||"").toLowerCase();
   return"assistente1";
 }
 function mapItem(item){
+  // Debug: log column ids on first item to help mapping
+  if(!window._colsLogged && item.column_values && item.column_values.length>0){
+    window._colsLogged=true;
+    console.log("[Monday] Colunas disponíveis:");
+    item.column_values.forEach(function(c){console.log("  id:'"+c.id+"' text:'"+c.text+"' value:'"+String(c.value).substring(0,50)+"'");});
+  }
   var comp=pComp(cv(item,["complexidade","complexity","prioridade"]));
   var etapaKey=pEtapa(cv(item,["etapa","stage","status","fase","phase"]));
   var resp=cv(item,["respons","owner","assigned","pessoa"])||"";
