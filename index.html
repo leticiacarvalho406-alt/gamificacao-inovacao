@@ -337,6 +337,35 @@ body{font-family:'Inter',sans-serif;background:#0F0C29;color:#fff;min-height:100
 .av-color.sel{border-color:#fff;transform:scale(1.15);box-shadow:0 0 0 2px rgba(124,58,237,.5)}
 @media(max-width:700px){.avatar-controls{grid-template-columns:1fr}.avatar-preview-wrap{flex-direction:column;text-align:center}}
 
+
+/* ── AVATAR ── */
+.av-page{display:flex;flex-direction:column;gap:20px}
+.av-preview-wrap{display:flex;align-items:center;gap:24px;padding:24px;background:rgba(255,255,255,.055);border-radius:16px;border:1px solid rgba(255,255,255,.09);flex-wrap:wrap}
+.av-canvas{width:140px;height:140px;flex-shrink:0;border-radius:50%;overflow:hidden;box-shadow:0 0 0 4px rgba(124,58,237,.4),0 8px 32px rgba(0,0,0,.4)}
+.av-preview-info{flex:1;min-width:180px}
+.av-prev-name{font-size:20px;font-weight:800;color:#fff;margin-bottom:4px}
+.av-prev-role{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:16px}
+.btn-save-av{padding:11px 26px;background:linear-gradient(135deg,#7C3AED,#EC4899);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 4px 16px rgba(236,72,153,.35);transition:.2s}
+.btn-save-av:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(236,72,153,.5)}
+.av-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25);border-radius:20px;font-size:12px;font-weight:600;color:#34D399;margin-top:10px}
+.av-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.av-sec{background:rgba(255,255,255,.04);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,.07)}
+.av-sec-title{font-size:11.5px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.av-sec-title i{color:#A78BFA}
+.av-colors{display:flex;flex-wrap:wrap;gap:8px}
+.av-col{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:.18s;flex-shrink:0}
+.av-col:hover{transform:scale(1.2)}
+.av-col.sel{border-color:#fff;transform:scale(1.15);box-shadow:0 0 0 2px rgba(124,58,237,.5)}
+.av-btns{display:flex;flex-wrap:wrap;gap:8px}
+.av-btn{padding:7px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);font-size:12.5px;color:rgba(255,255,255,.6);cursor:pointer;transition:.18s;font-family:'Inter',sans-serif;font-weight:500}
+.av-btn:hover{border-color:rgba(167,139,250,.4);color:#fff}
+.av-btn.sel{border-color:#A78BFA;background:rgba(124,58,237,.2);color:#fff;font-weight:700}
+/* Trilha dropdown */
+.trilha-drop-wrap{margin-bottom:16px}
+.trilha-dropdown{width:100%;padding:12px 16px;border:1.5px solid rgba(255,255,255,.15);border-radius:12px;font-size:14px;font-family:'Inter',sans-serif;background:rgba(255,255,255,.07);color:#fff;outline:none;cursor:pointer;transition:.2s}
+.trilha-dropdown:focus{border-color:#A78BFA}
+.trilha-dropdown option{background:#1E1B4B;color:#fff}
+
 </style>
 </head>
 <body>
@@ -587,36 +616,33 @@ async function fetchBoard(){
 }
 
 // ── PARSE ─────────────────────────────────────────
-function cv(item,kws){
+function cv(item, kws){
   for(var i=0;i<kws.length;i++){
-    var kw=kws[i].toLowerCase();
-    var c=(item.column_values||[]).find(function(c){
-      // Match by column id only (title removed from API v2024-01)
-      return c.id.toLowerCase().indexOf(kw)>=0;
+    var kw = kws[i].toLowerCase();
+    var col = (item.column_values||[]).find(function(c){
+      var cid = c.id.toLowerCase().replace(/_/g," ");
+      return cid.indexOf(kw) >= 0 || kw.indexOf(cid) >= 0;
     });
-    if(c&&c.text)return c.text;
-  }
-  // Fallback: try matching by value content
-  for(var j=0;j<kws.length;j++){
-    var kw2=kws[j].toLowerCase();
-    var c2=(item.column_values||[]).find(function(c){
-      return c.id.toLowerCase().indexOf(kw2)>=0||(c.text&&c.text.toLowerCase().indexOf(kw2)>=0);
-    });
-    if(c2&&c2.text)return c2.text;
+    if(col && col.text) return col.text;
   }
   return "";
 }
 function pComp(r){r=(r||"").toLowerCase();if(r.indexOf("alta")>=0||r.indexOf("high")>=0)return"Alta";if(r.indexOf("m")>=0&&(r.indexOf("dia")>=0||r.indexOf("ed")>=0))return"Media";return"Baixa";}
-function pEtapa(r){r=(r||"").toLowerCase().trim();
-  // Exact matches first (from Monday Status column)
-  if(r==="medir resultado"||r==="medir"||r.indexOf("medir result")>=0)return"Medicao";
-  if(r==="implementacao"||r==="implementação"||r.indexOf("implement")>=0||r.indexOf("go-live")>=0)return"Implantacao";
-  if(r==="assinatura cont."||r==="assinatura contrato"||r==="contrato"||r.indexOf("contrat")>=0||r.indexOf("assinatura")>=0||r.indexOf("poc")>=0||r.indexOf("assinado")>=0)return"Contrato";
-  if(r==="cotacao"||r==="cotação"||r.indexOf("cota")>=0)return"Cotacao";
-  if(r==="estruturacao"||r==="estruturação"||r.indexOf("estrut")>=0)return"Estruturacao";
-  if(r.indexOf("medi")>=0||r.indexOf("result")>=0)return"Medicao";
-  if(r.indexOf("conclu")>=0||r.indexOf("done")>=0||r.indexOf("finaliz")>=0)return"Concluido";
-  return"Estruturacao";
+function pEtapa(r){
+  r = (r||"").toLowerCase().trim();
+  if(!r) return "Estruturacao";
+  if(r.indexOf("medir result") >= 0 || r === "medir resultado") return "Medicao";
+  if(r.indexOf("medi") >= 0 && r.indexOf("result") >= 0)        return "Medicao";
+  if(r === "implementacao" || r === "implementação")             return "Implantacao";
+  if(r.indexOf("implement") >= 0 || r.indexOf("go-live") >= 0)  return "Implantacao";
+  if(r.indexOf("assinatura") >= 0 || r === "assinatura cont.")  return "Contrato";
+  if(r.indexOf("contrat") >= 0 || r.indexOf("poc") >= 0)        return "Contrato";
+  if(r === "cotacao" || r === "cotação")                         return "Cotacao";
+  if(r.indexOf("cota") >= 0)                                     return "Cotacao";
+  if(r === "estruturacao" || r === "estruturação")               return "Estruturacao";
+  if(r.indexOf("estrut") >= 0)                                   return "Estruturacao";
+  if(r.indexOf("conclu") >= 0 || r === "done")                  return "Concluido";
+  return "Estruturacao";
 }
 function pCargo(r){r=(r||"").toLowerCase();
   if(r.indexOf("s\u00eanior")>=0||r.indexOf("senior")>=0||r.indexOf(" sr")>=0)return"analista_sr";
@@ -626,28 +652,78 @@ function pCargo(r){r=(r||"").toLowerCase();
   return"assistente1";
 }
 function mapItem(item){
-  // Debug: log column ids on first item to help mapping
-  if(!window._colsLogged && item.column_values && item.column_values.length>0){
-    window._colsLogged=true;
+  if(!window._colsLogged && item.column_values && item.column_values.length){
+    window._colsLogged = true;
     console.log("[Monday] Colunas disponíveis:");
-    item.column_values.forEach(function(c){console.log("  id:'"+c.id+"' text:'"+c.text+"' value:'"+String(c.value).substring(0,50)+"'");});
+    item.column_values.forEach(function(c){
+      console.log("  id:'"+c.id+"' text:'"+c.text+"' val:'"+String(c.value||"").substring(0,60)+"'");
+    });
   }
-  var comp=pComp(cv(item,["complexidade","complexity","prioridade","complex"]));
-  // STATUS column is primary source for etapa
-  var statusRaw=cv(item,["status"])||cv(item,["etapa","stage","fase","phase"])||"";
-  var etapaKey=pEtapa(statusRaw);
-  // Responsible: "analista responsavel" or "pessoa" or "owner"
-  var resp=cv(item,["analista","responsavel","responsável","owner","assigned","pessoa"])||"";
-  // Clean up resp - remove extra names, take first person
-  if(resp.indexOf(",")>=0)resp=resp.split(",")[0].trim();
-  if(resp.indexOf(" e ")>=0)resp=resp.split(" e ")[0].trim();
-  var cargo=pCargo(cv(item,["cargo","role","fun","nivel"]));
-  var dl=cv(item,["prazo","deadline","data prevista","due","data"]);
-  var status=(cv(item,["status","estado"])||"").toLowerCase();
-  var done=status.indexOf("done")>=0||status.indexOf("conclu")>=0||status.indexOf("finaliz")>=0;
-  var onTime=null;
-  if(dl&&done){var due=new Date(dl),upd=new Date(item.updated_at);onTime=upd<=due;}
-  return{id:item.id,name:item.name,etapaKey:etapaKey,etapa:ETAPA_KEY[etapaKey]||etapaKey,comp:comp,resp:resp,cargo:cargo,dl:dl,onTime:onTime,pts:calcPts(cargo,etapaKey,comp),updatedAt:item.updated_at,createdAt:item.created_at};
+
+  var comp      = pComp(cv(item,["complexidade","complexity","prioridade","complex"]));
+  var statusRaw = cv(item,["status"]) || cv(item,["etapa","stage","fase","phase"]) || "";
+  var etapaKey  = pEtapa(statusRaw);
+
+  // Responsável — coluna "analista responsavel" do Monday
+  var resp = cv(item,["analista responsavel","analista responsável","analista_responsavel",
+                       "responsavel","responsável","owner","assigned","pessoa"]) || "";
+  if(resp.indexOf(",") >= 0) resp = resp.split(",")[0].trim();
+  if(resp.indexOf(" e ")  >= 0) resp = resp.split(" e ")[0].trim();
+
+  var cargo = pCargo(cv(item,["cargo","role","funcao","nivel","função"]));
+
+  // ── Datas reais por etapa (coluna "data real XXX") ──────────
+  var drEstrut   = cvDate(item,["data real estrut","data_real_estrut","data estruturacao"]);
+  var drCotacao  = cvDate(item,["data real cotacao","data real cotação","data_real_cotacao","data cotacao"]);
+  var drContrato = cvDate(item,["data real contrato","data_real_contrato","data contrato","data real assinatura","assinatura cont"]);
+  var drImpl     = cvDate(item,["data real implementacao","data real implementação","data real impl","data_real_impl","data implementacao"]);
+  var drMedicao  = cvDate(item,["data real medicao","data real medição","data real medir","data_real_medicao","data medicao"]);
+
+  // A "data real" da etapa atual é o que define se caiu no trimestre
+  var etapaDateMap = {
+    "Estruturacao": drEstrut,
+    "Cotacao":      drCotacao,
+    "Contrato":     drContrato,
+    "Implantacao":  drImpl,
+    "Medicao":      drMedicao
+  };
+  var realDate = etapaDateMap[etapaKey] || null;
+
+  // Prazo previsto (para calcular se foi no prazo)
+  var prazoMap = {
+    "Estruturacao": cvDate(item,["prazo estrut","data prevista estrut","deadline estrut"]),
+    "Cotacao":      cvDate(item,["prazo cotacao","prazo cotação","data prevista cotacao"]),
+    "Contrato":     cvDate(item,["prazo contrato","data prevista contrato"]),
+    "Implantacao":  cvDate(item,["prazo implementacao","prazo implementação","data prevista impl"]),
+    "Medicao":      cvDate(item,["prazo medicao","prazo medição","data prevista medicao"])
+  };
+  var prazo = prazoMap[etapaKey] || cvDate(item,["prazo","deadline","data prevista","due"]) || null;
+
+  // onTime: data real <= prazo previsto
+  var onTime = null;
+  if(realDate && prazo){
+    onTime = new Date(realDate) <= new Date(prazo);
+  }
+
+  var pts = calcPts(cargo, etapaKey, comp);
+
+  return {
+    id:         item.id,
+    name:       item.name,
+    etapaKey:   etapaKey,
+    etapa:      ETAPA_KEY[etapaKey] || etapaKey,
+    comp:       comp,
+    resp:       resp,
+    cargo:      cargo,
+    dl:         prazo,
+    realDate:   realDate,     // data real de conclusão da etapa
+    onTime:     onTime,
+    pts:        pts,
+    updatedAt:  item.updated_at,
+    createdAt:  item.created_at,
+    // raw date refs for debugging
+    _dates: {drEstrut:drEstrut,drCotacao:drCotacao,drContrato:drContrato,drImpl:drImpl,drMedicao:drMedicao}
+  };
 }
 
 // ── SCORING ───────────────────────────────────────
@@ -661,27 +737,56 @@ function calcDL(role,pct){return(DB[role]||[])[dlIdx(pct)]||0;}
 function curTier(role,pts){var t=BT[role];if(!t)return null;var ct=t[0];for(var i=0;i<t.length;i++)if(pts>=t[i].min)ct=t[i];return ct;}
 function nextTier(role,pts){return(BT[role]||[]).find(function(x){return pts<x.min;})||null;}
 function currQ(){var n=new Date();return"Q"+Math.ceil((n.getMonth()+1)/3)+" "+n.getFullYear();}
-function inCurrQ(d){if(!d)return true;var n=new Date(),q=Math.ceil((n.getMonth()+1)/3);var s=new Date(n.getFullYear(),(q-1)*3,1),e=new Date(n.getFullYear(),q*3,0,23,59,59);return new Date(d)>=s&&new Date(d)<=e;}
+function inCurrQ(d){
+  if(!d) return false; // sem data real → não conta no trimestre
+  var n = new Date(), q = Math.ceil((n.getMonth()+1)/3);
+  var s = new Date(n.getFullYear(),(q-1)*3,1);
+  var e = new Date(n.getFullYear(),q*3,0,23,59,59);
+  var dt = new Date(d);
+  return dt >= s && dt <= e;
+}
 function userProjects(name){
-  if(!name)return S.projects;
-  var n=name.toLowerCase().trim();
-  // Managers see all projects
-  var mgrs=MANAGERS.map(function(m){return m.toLowerCase();});
-  if(mgrs.indexOf(n)>=0||n==="alan kadri")return S.projects;
-  // Others: exact match on responsible name
+  if(!name) return S.projects;
+  if(isMgr(name)) return S.projects; // managers veem tudo
+  var n = name.toLowerCase().trim();
   return S.projects.filter(function(p){
-    var r=(p.resp||"").toLowerCase().trim();
-    return r===n||r.indexOf(n)>=0||n.indexOf(r)>=0;
+    var r = (p.resp||"").toLowerCase().trim();
+    // Match exato ou contém
+    return r === n || r.indexOf(n) >= 0 || n.indexOf(r) >= 0;
   });
 }
-function calcStats(projs,role){
-  var qp=projs.filter(function(p){return inCurrQ(p.updatedAt);});
-  var totalPts=qp.reduce(function(s,p){return s+p.pts;},0);
-  var bonusBase=calcBase(role,totalPts);
-  var tot=qp.length,onT=qp.filter(function(p){return p.onTime===true;}).length;
-  var pct=tot?Math.round(onT/tot*100):0;
-  var dlBonus=calcDL(role,pct);
-  return{totalPts:totalPts,bonusBase:bonusBase,dlBonus:dlBonus,total:bonusBase+dlBonus,pct:pct,impl:qp.filter(function(p){return p.etapaKey==="Implantacao";}).length,qp:qp};
+function calcStats(projs, role){
+  // Projetos que têm data real da etapa atual no trimestre corrente
+  var qp = projs.filter(function(p){ return inCurrQ(p.realDate); });
+
+  // Se nenhum tem data real, fallback para updatedAt (dados incompletos)
+  if(qp.length === 0){
+    qp = projs.filter(function(p){
+      if(!p.updatedAt) return false;
+      var n=new Date(), q2=Math.ceil((n.getMonth()+1)/3);
+      var s=new Date(n.getFullYear(),(q2-1)*3,1), e=new Date(n.getFullYear(),q2*3,0,23,59,59);
+      return new Date(p.updatedAt) >= s && new Date(p.updatedAt) <= e;
+    });
+  }
+
+  var totalPts  = qp.reduce(function(s,p){ return s+p.pts; }, 0);
+  var bonusBase = calcBase(role, totalPts);
+  var tot       = qp.length;
+  var onT       = qp.filter(function(p){ return p.onTime === true; }).length;
+  var pct       = tot ? Math.round(onT/tot*100) : 0;
+  var dlBonus   = calcDL(role, pct);
+  var impl      = qp.filter(function(p){ return p.etapaKey === "Implantacao"; }).length;
+
+  return {
+    totalPts:  totalPts,
+    bonusBase: bonusBase,
+    dlBonus:   dlBonus,
+    total:     bonusBase + dlBonus,
+    pct:       pct,
+    impl:      impl,
+    qp:        qp,
+    allProjs:  projs
+  };
 }
 
 // ── DEMO DATA ─────────────────────────────────────
@@ -735,15 +840,15 @@ function detectRole(name){
 }
 
 function doLogin(){
-  var role=document.getElementById("loginRole").value;
-  var name=document.getElementById("loginName").value.trim();
-  if(!role){notif("⚠️ Selecione seu cargo!");return;}
-  if(!name){notif("⚠️ Digite seu nome!");return;}
-  // Managers/directors override role
-  var lname=name.toLowerCase().trim();
-  if(lname==="luciana gomes")role="gerente";
-  if(lname==="alan kadri")role="diretor";
-  S.user={role:role,name:name};
+  var role = document.getElementById("loginRole").value;
+  var name = document.getElementById("loginName").value.trim();
+  if(!role){ notif("⚠️ Selecione seu cargo!"); return; }
+  if(!name){ notif("⚠️ Digite seu nome!"); return; }
+  // Luciana e Alan: cargo fixo independente do que selecionou
+  var ln = name.toLowerCase().trim();
+  if(ln === "luciana gomes") role = "gerente";
+  if(ln === "alan kadri")    role = "diretor";
+  S.user = {role:role, name:name};
   startApp();
 }
 
@@ -830,48 +935,47 @@ function rDash(){
 
 // ── TRILHA ────────────────────────────────────────
 function rTrilha(){
-  var role=S.user.role, name=S.user.name;
-  var mgr=role==="gerente"||role==="diretor";
-  // Manager sees all, others see only their own
-  var myProjs=mgr?S.projects:userProjects(name);
-
-  var wrap=document.getElementById("trilhaWrap");
+  var role = S.user.role, name = S.user.name;
+  var myProjs = isMgr(name) ? S.projects : userProjects(name);
+  var wrap = document.getElementById("trilhaWrap");
 
   if(!myProjs.length){
-    wrap.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>Nenhum projeto encontrado para '+(mgr?"a equipe":"voc\u00ea")+'.</p></div>';
+    wrap.innerHTML = '<div class="empty"><i class="fas fa-inbox"></i><p>Nenhum projeto encontrado.</p></div>';
     return;
   }
 
-  // Build selector + initial view
-  var selectedId=S.trilhaSelectedId||(myProjs[0]?myProjs[0].id:null);
-  // Validate selected still exists
-  if(selectedId&&!myProjs.find(function(p){return p.id===selectedId;}))selectedId=myProjs[0].id;
-  S.trilhaSelectedId=selectedId;
+  // Validate selection
+  if(S.trilhaSelectedId && !myProjs.find(function(p){return p.id===S.trilhaSelectedId;}))
+    S.trilhaSelectedId = null;
+  if(!S.trilhaSelectedId) S.trilhaSelectedId = myProjs[0].id;
 
-  var html='<div class="trilha-page">';
+  var proj = myProjs.find(function(p){return p.id===S.trilhaSelectedId;}) || myProjs[0];
+  var ec   = ETAPA_COLORS[proj.etapaKey] || "#7C3AED";
 
-  // ── Project selector
-  html+='<div class="trilha-selector-wrap">';
-  html+='<label class="trilha-sel-label"><i class="fas fa-project-diagram"></i> Selecione o Projeto</label>';
-  html+='<div class="trilha-sel-grid">';
+  var html = '<div class="trilha-page">';
+
+  // ── Dropdown select ──────────────────────────────────────
+  html += '<div class="trilha-drop-wrap">';
+  html += '<label class="trilha-sel-label"><i class="fas fa-project-diagram"></i> Projeto</label>';
+  html += '<select class="trilha-dropdown" onchange="selectTrilhaProject(this.value)">';
   myProjs.forEach(function(p){
-    var active=p.id===selectedId;
-    var ec=ETAPA_COLORS[p.etapaKey]||"#7C3AED";
-    html+='<div class="tsel-card'+(active?" tsel-active":"")+'" onclick="selectTrilhaProject(\''+p.id+'\')" style="'+(active?"border-color:"+ec+";box-shadow:0 0 0 1px "+ec+",0 4px 20px "+ec+"33":"")+'">';
-    html+='<div class="tsel-dot" style="background:'+ec+'"></div>';
-    html+='<div class="tsel-info"><div class="tsel-name">'+p.name+'</div>';
-    html+='<div class="tsel-sub">'+eBadgeName(p.etapaKey)+'</div></div>';
-    if(active)html+='<i class="fas fa-check-circle tsel-check" style="color:'+ec+'"></i>';
-    html+='</div>';
+    var color = ETAPA_COLORS[p.etapaKey]||"#7C3AED";
+    html += '<option value="'+p.id+'"'+(p.id===S.trilhaSelectedId?' selected':'')+'>'+p.name+' — '+eBadgeName(p.etapaKey)+'</option>';
   });
-  html+='</div></div>';
+  html += '</select></div>';
 
-  // ── Roadmap for selected project
-  var proj=myProjs.find(function(p){return p.id===selectedId;})||myProjs[0];
-  html+=buildRoadmap(proj,myProjs,mgr?name:name);
+  // ── Project header ───────────────────────────────────────
+  html += '<div class="roadmap-proj-header">';
+  html += '<div class="rph-left"><i class="fas fa-project-diagram" style="color:'+ec+'"></i><div>';
+  html += '<div class="rph-name">'+proj.name+'</div>';
+  html += '<div class="rph-sub">'+(proj.resp||"—")+' &nbsp;·&nbsp; '+proj.comp+'</div></div></div>';
+  html += '<span class="rph-etapa" style="background:'+ec+'22;color:'+ec+';border:1px solid '+ec+'44">'+eBadgeName(proj.etapaKey)+'</span>';
+  html += '</div>';
 
-  html+='</div>';
-  wrap.innerHTML=html;
+  // ── Roadmap SVG ──────────────────────────────────────────
+  html += buildRoadmap(proj, myProjs, name);
+  html += '</div>';
+  wrap.innerHTML = html;
 }
 
 var ETAPA_COLORS={
@@ -888,7 +992,7 @@ function eBadgeName(sk){
 }
 
 function selectTrilhaProject(id){
-  S.trilhaSelectedId=id;
+  S.trilhaSelectedId = id;
   rTrilha();
 }
 
@@ -1234,69 +1338,62 @@ var AV_OPTIONS = {
   bg: ["#1E1B4B","#0F172A","#134E4A","#450A0A","#1E3A5F","#3B0764","#1A2E05","#1C1917"]
 };
 
-function drawAvatar(cfg, targetId) {
-  var svg = document.getElementById(targetId || "avatarSVG");
-  if (!svg) return;
-  var c = cfg || AV;
+var AV = {skin:"#F5C5A3",hair:"short",hairColor:"#3D2B1F",eyes:"normal",eyeColor:"#2C3E50",mouth:"smile",top:"#7C3AED",bg:"#1E1B4B",accessory:"none"};
+var AV_OPTS = {
+  skin:      ["#FDDBB4","#F5C5A3","#E8A87C","#C68642","#8D5524","#4A2912"],
+  hairColor: ["#3D2B1F","#1C1C1C","#8B4513","#D4A017","#C0392B","#7F8C8D","#F0E6D3","#7C3AED"],
+  eyeColor:  ["#2C3E50","#1ABC9C","#3498DB","#8E44AD","#27AE60","#E67E22","#95A5A6"],
+  top:       ["#7C3AED","#EC4899","#10B981","#3B82F6","#F59E0B","#EF4444","#1E293B","#0EA5E9","#8B5CF6"],
+  bg:        ["#1E1B4B","#0F172A","#134E4A","#450A0A","#1E3A5F","#3B0764","#1A2E05","#1C1917"]
+};
 
-  var hairPaths = {
-    short: '<path d="M30,42 Q30,18 50,18 Q70,18 70,42 Q68,28 50,26 Q32,28 30,42Z" fill="'+c.hairColor+'"/>',
-    long:  '<path d="M28,45 Q28,16 50,16 Q72,16 72,45 Q70,30 50,28 Q30,30 28,45Z" fill="'+c.hairColor+'"/><rect x="28" y="55" width="6" height="30" rx="3" fill="'+c.hairColor+'"/><rect x="66" y="55" width="6" height="30" rx="3" fill="'+c.hairColor+'"/>',
-    curly: '<path d="M29,44 Q29,17 50,17 Q71,17 71,44 Q69,29 50,27 Q31,29 29,44Z" fill="'+c.hairColor+'"/><circle cx="30" cy="40" r="6" fill="'+c.hairColor+'"/><circle cx="37" cy="30" r="5" fill="'+c.hairColor+'"/><circle cx="50" cy="26" r="5" fill="'+c.hairColor+'"/><circle cx="63" cy="30" r="5" fill="'+c.hairColor+'"/><circle cx="70" cy="40" r="6" fill="'+c.hairColor+'"/>',
-    bun:   '<path d="M31,44 Q31,19 50,19 Q69,19 69,44 Q67,30 50,28 Q33,30 31,44Z" fill="'+c.hairColor+'"/><circle cx="50" cy="20" r="10" fill="'+c.hairColor+'"/>',
-    none:  '',
-    ponytail: '<path d="M30,43 Q30,18 50,18 Q70,18 70,43 Q68,29 50,27 Q32,29 30,43Z" fill="'+c.hairColor+'"/><rect x="47" y="18" width="6" height="28" rx="3" fill="'+c.hairColor+'"/>',
+function drawAvatar(cfg, id){
+  var svg = document.getElementById(id); if(!svg) return;
+  var c = cfg||AV;
+  var hair={
+    short:    '<path d="M30,42 Q30,18 50,18 Q70,18 70,42 Q68,28 50,26 Q32,28 30,42Z" fill="'+c.hairColor+'"/>',
+    long:     '<path d="M28,46 Q28,16 50,16 Q72,16 72,46 Q70,30 50,28 Q30,30 28,46Z" fill="'+c.hairColor+'"/><rect x="28" y="55" width="6" height="28" rx="3" fill="'+c.hairColor+'"/><rect x="66" y="55" width="6" height="28" rx="3" fill="'+c.hairColor+'"/>',
+    curly:    '<path d="M29,44 Q29,17 50,17 Q71,17 71,44Z" fill="'+c.hairColor+'"/><circle cx="30" cy="40" r="7" fill="'+c.hairColor+'"/><circle cx="38" cy="28" r="6" fill="'+c.hairColor+'"/><circle cx="50" cy="24" r="6" fill="'+c.hairColor+'"/><circle cx="62" cy="28" r="6" fill="'+c.hairColor+'"/><circle cx="70" cy="40" r="7" fill="'+c.hairColor+'"/>',
+    bun:      '<path d="M31,44 Q31,19 50,19 Q69,19 69,44Z" fill="'+c.hairColor+'"/><circle cx="50" cy="19" r="11" fill="'+c.hairColor+'"/>',
+    ponytail: '<path d="M30,43 Q30,18 50,18 Q70,18 70,43Z" fill="'+c.hairColor+'"/><rect x="47" y="17" width="6" height="30" rx="3" fill="'+c.hairColor+'"/>',
+    none:     ''
   };
-
-  var eyePaths = {
+  var eyes={
     normal: '<ellipse cx="41" cy="52" rx="4.5" ry="4" fill="white"/><circle cx="41" cy="52" r="2.8" fill="'+c.eyeColor+'"/><circle cx="42" cy="51" r="1" fill="white"/><ellipse cx="59" cy="52" rx="4.5" ry="4" fill="white"/><circle cx="59" cy="52" r="2.8" fill="'+c.eyeColor+'"/><circle cx="60" cy="51" r="1" fill="white"/>',
-    happy: '<path d="M37,52 Q41,55 45,52" stroke="'+c.eyeColor+'" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M55,52 Q59,55 63,52" stroke="'+c.eyeColor+'" stroke-width="2" fill="none" stroke-linecap="round"/>',
-    wink: '<ellipse cx="41" cy="52" rx="4.5" ry="4" fill="white"/><circle cx="41" cy="52" r="2.8" fill="'+c.eyeColor+'"/><circle cx="42" cy="51" r="1" fill="white"/><path d="M55,52 Q59,55 63,52" stroke="'+c.eyeColor+'" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
-    cool: '<rect x="36" y="49" width="9" height="6" rx="3" fill="#1C1C1C"/><rect x="37.5" y="50" width="6" height="4" rx="2" fill="'+c.eyeColor+'"/><rect x="54" y="49" width="9" height="6" rx="3" fill="#1C1C1C"/><rect x="55.5" y="50" width="6" height="4" rx="2" fill="'+c.eyeColor+'"/>',
-    stars: '<text x="38" y="55" font-size="8" fill="'+c.eyeColor+'">★</text><text x="56" y="55" font-size="8" fill="'+c.eyeColor+'">★</text>',
+    happy:  '<path d="M37,52 Q41,57 45,52" stroke="'+c.eyeColor+'" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M55,52 Q59,57 63,52" stroke="'+c.eyeColor+'" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+    wink:   '<ellipse cx="41" cy="52" rx="4.5" ry="4" fill="white"/><circle cx="41" cy="52" r="2.8" fill="'+c.eyeColor+'"/><circle cx="42" cy="51" r="1" fill="white"/><path d="M55,52 Q59,56 63,52" stroke="'+c.eyeColor+'" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+    cool:   '<rect x="35" y="49" width="11" height="7" rx="3.5" fill="#111"/><ellipse cx="40.5" cy="52.5" rx="3" ry="2.5" fill="'+c.eyeColor+'"/><rect x="54" y="49" width="11" height="7" rx="3.5" fill="#111"/><ellipse cx="59.5" cy="52.5" rx="3" ry="2.5" fill="'+c.eyeColor+'"/>',
+    stars:  '<text x="36" y="57" font-size="10" fill="'+c.eyeColor+'">★</text><text x="54" y="57" font-size="10" fill="'+c.eyeColor+'">★</text>'
   };
-
-  var mouthPaths = {
-    smile: '<path d="M41,63 Q50,70 59,63" stroke="#C0392B" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
-    grin:  '<path d="M40,63 Q50,72 60,63" stroke="#C0392B" stroke-width="2.5" fill="#E74C3C" stroke-linecap="round"/><path d="M44,67 Q50,71 56,67" stroke="white" stroke-width="1.5" fill="none"/>',
-    neutral:'<line x1="43" y1="65" x2="57" y2="65" stroke="#C0392B" stroke-width="2.5" stroke-linecap="round"/>',
-    open:  '<ellipse cx="50" cy="65" rx="8" ry="5" fill="#C0392B"/><ellipse cx="50" cy="65" rx="6" ry="3" fill="#922B21"/>',
+  var mouth={
+    smile:   '<path d="M41,64 Q50,71 59,64" stroke="#922B21" stroke-width="2.5" fill="none" stroke-linecap="round"/>',
+    grin:    '<path d="M40,63 Q50,73 60,63" stroke="#922B21" stroke-width="2" fill="#E74C3C" stroke-linecap="round"/><path d="M44,68 Q50,72 56,68" stroke="white" stroke-width="1.5" fill="none"/>',
+    neutral: '<line x1="43" y1="65" x2="57" y2="65" stroke="#922B21" stroke-width="2.5" stroke-linecap="round"/>',
+    open:    '<ellipse cx="50" cy="65" rx="8" ry="5.5" fill="#922B21"/><ellipse cx="50" cy="65" rx="6" ry="3.5" fill="#7B241C"/>'
   };
-
-  var accessories = {
-    none: '',
-    glasses: '<rect x="33" y="48" width="13" height="9" rx="4" stroke="#7C3AED" stroke-width="2" fill="none"/><rect x="54" y="48" width="13" height="9" rx="4" stroke="#7C3AED" stroke-width="2" fill="none"/><line x1="46" y1="52" x2="54" y2="52" stroke="#7C3AED" stroke-width="1.5"/>',
-    headband: '<rect x="26" y="36" width="48" height="7" rx="3.5" fill="'+c.top+'" opacity="0.9"/>',
-    hat: '<ellipse cx="50" cy="30" rx="26" ry="5" fill="'+c.hairColor+'"/><rect x="33" y="18" width="34" height="14" rx="4" fill="'+c.hairColor+'"/>',
-    earrings: '<circle cx="27" cy="58" r="3" fill="#F59E0B"/><circle cx="73" cy="58" r="3" fill="#F59E0B"/>',
+  var acc={
+    none:     '',
+    glasses:  '<rect x="33" y="48" width="13" height="9" rx="4" stroke="#7C3AED" stroke-width="2" fill="none"/><rect x="54" y="48" width="13" height="9" rx="4" stroke="#7C3AED" stroke-width="2" fill="none"/><line x1="46" y1="52" x2="54" y2="52" stroke="#7C3AED" stroke-width="1.5"/>',
+    headband: '<rect x="25" y="35" width="50" height="7" rx="3.5" fill="'+c.top+'" opacity="0.9"/>',
+    hat:      '<ellipse cx="50" cy="29" rx="27" ry="5" fill="'+c.hairColor+'"/><rect x="33" y="17" width="34" height="14" rx="4" fill="'+c.hairColor+'"/>',
+    earrings: '<circle cx="26" cy="57" r="3.5" fill="#F59E0B"/><circle cx="74" cy="57" r="3.5" fill="#F59E0B"/>'
   };
 
   svg.innerHTML =
-    // BG
     '<circle cx="50" cy="50" r="50" fill="'+c.bg+'"/>'+
-    // Shoulders/body
-    '<ellipse cx="50" cy="95" rx="28" ry="18" fill="'+c.top+'"/>'+
-    '<rect x="22" y="88" width="56" height="15" rx="8" fill="'+c.top+'"/>'+
-    // Neck
-    '<rect x="43" y="72" width="14" height="14" rx="5" fill="'+c.skin+'"/>'+
-    // Head
+    '<ellipse cx="50" cy="96" rx="30" ry="18" fill="'+c.top+'"/>'+
+    '<rect x="20" y="88" width="60" height="14" rx="8" fill="'+c.top+'"/>'+
+    '<rect x="43" y="72" width="14" height="13" rx="5" fill="'+c.skin+'"/>'+
     '<ellipse cx="50" cy="50" rx="22" ry="24" fill="'+c.skin+'"/>'+
-    // Hair behind
-    (hairPaths[c.hair]||'')+
-    // Ears
-    '<ellipse cx="28" cy="52" rx="4" ry="5" fill="'+c.skin+'"/>'+
-    '<ellipse cx="72" cy="52" rx="4" ry="5" fill="'+c.skin+'"/>'+
-    // Eyes
-    (eyePaths[c.eyes]||'')+
-    // Nose
-    '<path d="M48,57 Q50,61 52,57" stroke="'+shadeColor(c.skin,-20)+'" stroke-width="1.5" fill="none" stroke-linecap="round"/>'+
-    // Mouth
-    (mouthPaths[c.mouth]||'')+
-    // Eyebrows
+    (hair[c.hair]||'')+
+    '<ellipse cx="28" cy="52" rx="4" ry="5.5" fill="'+c.skin+'"/>'+
+    '<ellipse cx="72" cy="52" rx="4" ry="5.5" fill="'+c.skin+'"/>'+
+    (eyes[c.eyes]||'')+
+    '<path d="M47,57 Q50,61 53,57" stroke="rgba(0,0,0,0.2)" stroke-width="1.5" fill="none" stroke-linecap="round"/>'+
+    (mouth[c.mouth]||'')+
     '<path d="M37,47 Q41,44 45,47" stroke="'+c.hairColor+'" stroke-width="2" fill="none" stroke-linecap="round"/>'+
     '<path d="M55,47 Q59,44 63,47" stroke="'+c.hairColor+'" stroke-width="2" fill="none" stroke-linecap="round"/>'+
-    // Accessory
-    (accessories[c.accessory]||'');
+    (acc[c.accessory]||'');
 }
 
 function shadeColor(color, percent){
@@ -1307,17 +1404,11 @@ function shadeColor(color, percent){
 }
 
 function rAvatar(){
-  if(!S.user)return;
-  // Load saved avatar
-  try{
-    var saved=localStorage.getItem("av_"+S.user.name);
-    if(saved)Object.assign(AV,JSON.parse(saved));
-  }catch(e){}
-
-  document.getElementById("avPrevName").textContent=S.user.name;
-  document.getElementById("avPrevRole").textContent=RL[S.user.role]||S.user.role;
-
-  buildAvatarControls();
+  if(!S.user) return;
+  try{var s=localStorage.getItem("av_"+S.user.name);if(s)Object.assign(AV,JSON.parse(s));}catch(e){}
+  document.getElementById("avPrevName").textContent = S.user.name;
+  document.getElementById("avPrevRole").textContent = RL[S.user.role]||S.user.role;
+  buildAvControls();
   drawAvatar(AV,"avatarSVG");
 }
 
@@ -1356,21 +1447,18 @@ function buildAvatarControls(){
   document.getElementById("avatarControls").innerHTML=html;
 }
 
-function setAV(key, val){
+function setAV(key,val){
   AV[key]=val;
-  buildAvatarControls();
+  buildAvControls();
   drawAvatar(AV,"avatarSVG");
-  // Also update sidebar avatar if it's SVG
-  updateSidebarAvatar();
 }
 
 function saveAvatar(){
-  try{localStorage.setItem("av_"+S.user.name, JSON.stringify(AV));}catch(e){}
-  AV_SAVED=true;
-  var badge=document.getElementById("avSavedBadge");
-  if(badge)badge.classList.remove("hidden");
-  updateSidebarAvatar();
-  notif("✅ Avatar salvo!");
+  try{localStorage.setItem("av_"+S.user.name,JSON.stringify(AV));}catch(e){}
+  var badge=document.getElementById("avBadge");
+  if(badge){badge.classList.remove("hidden");setTimeout(function(){badge.classList.add("hidden");},3000);}
+  updateSbAvatar();
+  notif("✅ Avatar salvo com sucesso!");
 }
 
 function updateSidebarAvatar(){
@@ -1390,11 +1478,103 @@ function updateSidebarAvatar(){
 }
 
 function loadSavedAvatar(){
-  if(!S.user)return;
+  if(!S.user) return;
+  try{var s=localStorage.getItem("av_"+S.user.name);if(s)Object.assign(AV,JSON.parse(s));}catch(e){}
+  updateSbAvatar();
+}
+
+
+function cvDate(item,keywords){
+  for(var i=0;i<keywords.length;i++){
+    var kw=keywords[i].toLowerCase();
+    var col=(item.column_values||[]).find(function(c){
+      var cid=c.id.toLowerCase().replace(/_/g," ");
+      return cid.indexOf(kw)>=0||kw.indexOf(cid)>=0;
+    });
+    if(col){
+      if(col.value){try{var v=JSON.parse(col.value);if(v&&v.date)return v.date;}catch(e){}}
+      if(col.text&&col.text.match(/\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4}/))return col.text;
+    }
+  }
+  return null;
+}
+
+function updateSbAvatar(){
+  var el=document.getElementById("sbAv");if(!el)return;
   try{
-    var saved=localStorage.getItem("av_"+S.user.name);
-    if(saved){Object.assign(AV,JSON.parse(saved));updateSidebarAvatar();}
+    var s=localStorage.getItem("av_"+(S.user?S.user.name:""));
+    if(s){
+      var av=JSON.parse(s);
+      el.style.padding="0";
+      el.innerHTML='<svg id="sbAvSVG" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:44px;height:44px;border-radius:12px;display:block"></svg>';
+      drawAvatar(av,"sbAvSVG");
+    }
   }catch(e){}
+}
+
+
+function cvDate(item,keywords){
+  for(var i=0;i<keywords.length;i++){
+    var kw=keywords[i].toLowerCase().replace(/_/g," ");
+    var col=(item.column_values||[]).find(function(c){
+      var cid=c.id.toLowerCase().replace(/_/g," ");
+      return cid.indexOf(kw)>=0;
+    });
+    if(col){
+      if(col.value){try{var v=JSON.parse(col.value);if(v&&v.date)return v.date;}catch(e){}}
+      if(col.text){var tm=col.text.match(/(\d{4}-\d{2}-\d{2})/);if(tm)return tm[1];}
+    }
+  }
+  return null;
+}
+
+function buildAvControls(){
+  var AVO=AV_OPTS;
+  var secs=[
+    {label:"Tom de pele",   icon:"fa-hand-paper", type:"color", key:"skin",      opts:AVO.skin},
+    {label:"Cabelo",        icon:"fa-cut",         type:"btn",   key:"hair",      opts:[{v:"short",l:"Curto"},{v:"long",l:"Longo"},{v:"curly",l:"Cacheado"},{v:"bun",l:"Coque"},{v:"ponytail",l:"Rabo de cavalo"},{v:"none",l:"Careca"}]},
+    {label:"Cor do cabelo", icon:"fa-palette",     type:"color", key:"hairColor", opts:AVO.hairColor},
+    {label:"Olhos",         icon:"fa-eye",         type:"btn",   key:"eyes",      opts:[{v:"normal",l:"Normal"},{v:"happy",l:"Feliz"},{v:"wink",l:"Piscadela"},{v:"cool",l:"Oculos"},{v:"stars",l:"Estrelas"}]},
+    {label:"Cor dos olhos", icon:"fa-circle",      type:"color", key:"eyeColor",  opts:AVO.eyeColor},
+    {label:"Boca",          icon:"fa-smile",       type:"btn",   key:"mouth",     opts:[{v:"smile",l:"Sorriso"},{v:"grin",l:"Risada"},{v:"neutral",l:"Neutro"},{v:"open",l:"Aberta"}]},
+    {label:"Acessorio",     icon:"fa-glasses",     type:"btn",   key:"accessory", opts:[{v:"none",l:"Nenhum"},{v:"glasses",l:"Oculos"},{v:"headband",l:"Faixa"},{v:"hat",l:"Chapeu"},{v:"earrings",l:"Brincos"}]},
+    {label:"Cor da roupa",  icon:"fa-tshirt",      type:"color", key:"top",       opts:AVO.top},
+    {label:"Fundo",         icon:"fa-circle",      type:"color", key:"bg",        opts:AVO.bg}
+  ];
+  var h="";
+  secs.forEach(function(sec){
+    h+='<div class="av-sec"><div class="av-sec-title"><i class="fas '+sec.icon+'"></i>'+sec.label+'</div>';
+    if(sec.type==="color"){
+      h+='<div class="av-colors">';
+      sec.opts.forEach(function(col){
+        var sel=AV[sec.key]===col?" sel":"";
+        h+='<div class="av-col'+sel+'" style="background:'+col+'" onclick="setAV(\''+sec.key+'\',\''+col+'\')"></div>';
+      });
+      h+='</div>';
+    } else {
+      h+='<div class="av-btns">';
+      sec.opts.forEach(function(o){
+        var sel=AV[sec.key]===o.v?" sel":"";
+        h+='<button class="av-btn'+sel+'" onclick="setAV(\''+sec.key+'\',\''+o.v+'\')">'+o.l+'</button>';
+      });
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  document.getElementById("avControls").innerHTML=h;
+}
+
+function updateSbAvatar(){
+  var el=document.getElementById("sbAv");if(!el)return;
+  try{
+    var stored=localStorage.getItem("av_"+(S.user?S.user.name:""));
+    if(stored){
+      var av=JSON.parse(stored);
+      el.style.padding="0";
+      el.innerHTML='<svg id="sbAvSVG" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:44px;height:44px;border-radius:12px;display:block"></svg>';
+      drawAvatar(av,"sbAvSVG");
+    }
+  }catch(ex){}
 }
 
 </script>
