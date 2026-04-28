@@ -11,27 +11,24 @@ const MONDAY_KEY = process.env.MONDAY_KEY ||
 const BOARD_ID = process.env.BOARD_ID || '4879086777';
 
 app.use(express.json({ limit: '10mb' }));
-
-// Allow all CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
-
-// Serve static files from same directory
 app.use(express.static(__dirname));
 
 // ── MONDAY PROXY ──────────────────────────────────
 app.post('/api/monday', (req, res) => {
   const { query } = req.body || {};
-  if (!query) return res.status(400).json({ error: 'Query obrigatória' });
+  if (!query) return res.status(400).json({ error: 'Query obrigatoria' });
 
-  console.log('[Monday] Query recebida, chamando API...');
+  console.log('[Monday] Recebida query, chamando API...');
 
   const bodyStr = JSON.stringify({ query });
+  let responded = false; // guard against double-response
 
   const options = {
     hostname: 'api.monday.com',
@@ -42,40 +39,46 @@ app.post('/api/monday', (req, res) => {
       'Authorization':  MONDAY_KEY,
       'API-Version':    '2024-01',
       'Content-Length': Buffer.byteLength(bodyStr),
-      'User-Agent':     'gamificacao-inovacao/2.0',
+      'User-Agent':     'gamificacao/2.0',
     },
   };
 
   const mondayReq = https.request(options, (mondayRes) => {
-    console.log('[Monday] Status:', mondayRes.statusCode);
     let data = '';
     mondayRes.on('data', chunk => { data += chunk; });
     mondayRes.on('end', () => {
-      console.log('[Monday] Resposta recebida, tamanho:', data.length);
+      if (responded) return;
+      responded = true;
+      console.log('[Monday] Status:', mondayRes.statusCode, '| Bytes:', data.length);
       try {
         const parsed = JSON.parse(data);
         if (parsed.errors) {
-          console.error('[Monday] Erros da API:', JSON.stringify(parsed.errors));
+          console.error('[Monday] API errors:', JSON.stringify(parsed.errors));
         } else {
-          console.log('[Monday] ✅ Sucesso!');
+          const count = parsed?.data?.boards?.[0]?.items_page?.items?.length;
+          console.log('[Monday] OK! Items:', count);
         }
         res.json(parsed);
       } catch (e) {
         console.error('[Monday] Parse error:', e.message, '| Raw:', data.substring(0, 200));
-        res.status(500).json({ error: 'Parse error', raw: data.substring(0, 200) });
+        res.status(500).json({ error: 'Parse error', raw: data.substring(0, 100) });
       }
     });
   });
 
   mondayReq.on('error', (e) => {
+    if (responded) return;
+    responded = true;
     console.error('[Monday] Request error:', e.message);
     res.status(500).json({ error: e.message });
   });
 
-  mondayReq.setTimeout(15000, () => {
+  mondayReq.setTimeout(20000, () => {
+    if (responded) return;
+    responded = true;
     console.error('[Monday] Timeout!');
     mondayReq.destroy();
-    res.status(504).json({ error: 'Timeout ao conectar com Monday.com' });
+    res.status(504).json({ error: 'Timeout' });
   });
 
   mondayReq.write(bodyStr);
@@ -92,7 +95,7 @@ app.get('/health', (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
 
-// ── FALLBACK SPA ──────────────────────────────────
+// ── SPA FALLBACK ──────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -101,6 +104,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('\n╔══════════════════════════════════════════╗');
   console.log('║  🚀 GAMIFICAÇÃO INOVAÇÃO — Online!       ║');
   console.log(`║  ✅ Porta: ${PORT}                          ║`);
-  console.log(`║  🔗 Board: ${BOARD_ID}              ║`);
   console.log('╚══════════════════════════════════════════╝\n');
 });
