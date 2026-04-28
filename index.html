@@ -351,9 +351,21 @@ body{font-family:'Inter',sans-serif;background:#0F0C29;color:#fff;min-height:100
       <div class="ltag">Sistema de Gamificação — Equipe Inovação</div>
     </div>
     <div class="fg">
+      <label><i class="fas fa-user"></i> Cargo</label>
+      <select id="loginRole">
+        <option value="">Selecione seu cargo</option>
+        <option value="assistente1">Assistente I</option>
+        <option value="assistente2">Assistente II</option>
+        <option value="analista_jr">Analista Júnior</option>
+        <option value="analista_sr">Analista Sênior</option>
+        <option value="gerente">Gerente</option>
+        <option value="diretor">Diretor</option>
+      </select>
+    </div>
+    <div class="fg">
       <label><i class="fas fa-id-card"></i> Seu Nome</label>
-      <input type="text" id="loginName" placeholder="Digite seu nome completo (igual ao Monday)"/>
-      <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:6px"><i class="fas fa-info-circle"></i> Digite exatamente como está no Monday.com</div>
+      <input type="text" id="loginName" placeholder="Digite seu nome (igual ao Monday.com)"/>
+      <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:6px"><i class="fas fa-info-circle"></i> Digite exatamente como está no campo "Analista Responsável" do Monday</div>
     </div>
     <button class="btn-login" onclick="doLogin()"><i class="fas fa-rocket"></i> Entrar no Sistema</button>
   </div>
@@ -723,11 +735,14 @@ function detectRole(name){
 }
 
 function doLogin(){
+  var role=document.getElementById("loginRole").value;
   var name=document.getElementById("loginName").value.trim();
+  if(!role){notif("⚠️ Selecione seu cargo!");return;}
   if(!name){notif("⚠️ Digite seu nome!");return;}
-  var role=detectRole(name);
-  // Special: Alan Kadri is director
-  if(name.toLowerCase()==="alan kadri")role="diretor";
+  // Managers/directors override role
+  var lname=name.toLowerCase().trim();
+  if(lname==="luciana gomes")role="gerente";
+  if(lname==="alan kadri")role="diretor";
   S.user={role:role,name:name};
   startApp();
 }
