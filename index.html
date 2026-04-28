@@ -542,6 +542,10 @@ body{font-family:'Inter',sans-serif;background:#0F0C29;color:#fff;min-height:100
   </div>
 </div>
 <script>
+var MANAGERS=["luciana gomes","alan kadri"];
+function isMgr(name){return MANAGERS.indexOf((name||"").toLowerCase().trim())>=0;}
+
+
 
 
 const MONDAY_KEY="eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjYzMTkxMzAzOSwiYWFpIjoxMSwidWlkIjo2MDYyMjc5OCwiaWFkIjoiMjAyNi0wMy0xMVQxNzo0MToxMS4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MTY0ODM4OTEsInJnbiI6InVzZTEifQ.g3HAx1OKRnapboEbgGOD3VKR4ABPKoZung9IyjLzC2Q";
@@ -618,10 +622,11 @@ async function fetchBoard(){
 // ── PARSE ─────────────────────────────────────────
 function cv(item, kws){
   for(var i=0;i<kws.length;i++){
-    var kw = kws[i].toLowerCase();
+    var kw = kws[i].toLowerCase().replace(/ /g,"_");
+    var kw2 = kws[i].toLowerCase().replace(/_/g," ");
     var col = (item.column_values||[]).find(function(c){
-      var cid = c.id.toLowerCase().replace(/_/g," ");
-      return cid.indexOf(kw) >= 0 || kw.indexOf(cid) >= 0;
+      var cid = c.id.toLowerCase();
+      return cid.indexOf(kw) >= 0 || cid.indexOf(kw2.replace(/ /g,"_")) >= 0;
     });
     if(col && col.text) return col.text;
   }
@@ -633,7 +638,7 @@ function pEtapa(r){
   if(!r) return "Estruturacao";
   if(r.indexOf("medir result") >= 0 || r === "medir resultado") return "Medicao";
   if(r.indexOf("medi") >= 0 && r.indexOf("result") >= 0)        return "Medicao";
-  if(r === "implementacao" || r === "implementação")             return "Implantacao";
+  if(r === "implementacao" || r === "implementação" || r === "instalacao" || r === "instalação")return "Implantacao";
   if(r.indexOf("implement") >= 0 || r.indexOf("go-live") >= 0)  return "Implantacao";
   if(r.indexOf("assinatura") >= 0 || r === "assinatura cont.")  return "Contrato";
   if(r.indexOf("contrat") >= 0 || r.indexOf("poc") >= 0)        return "Contrato";
@@ -642,6 +647,9 @@ function pEtapa(r){
   if(r === "estruturacao" || r === "estruturação")               return "Estruturacao";
   if(r.indexOf("estrut") >= 0)                                   return "Estruturacao";
   if(r.indexOf("conclu") >= 0 || r === "done")                  return "Concluido";
+  // Extra Monday status values
+  if(r.indexOf("instal") >= 0)                                   return "Implantacao";
+  if(r === "em andamento" || r === "andamento")                  return "Estruturacao";
   return "Estruturacao";
 }
 function pCargo(r){r=(r||"").toLowerCase();
@@ -827,17 +835,6 @@ async function doSync(){
 
 // ── LOGIN ─────────────────────────────────────────
 // Managers/directors with full access
-var MANAGERS=["Luciana Gomes","Alan Kadri"];
-
-function detectRole(name){
-  var n=name.toLowerCase();
-  // Check if manager/director
-  for(var i=0;i<MANAGERS.length;i++){
-    if(MANAGERS[i].toLowerCase()===n)return"gerente";
-  }
-  // Default: analista_jr (scoring will adapt based on projects)
-  return"analista_jr";
-}
 
 function doLogin(){
   var role = document.getElementById("loginRole").value;
