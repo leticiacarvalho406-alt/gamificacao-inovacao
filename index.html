@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -508,7 +509,7 @@ let S={user:null,projects:[],approvals:{},timer:null};
 async function fetchBoard(){
   var q="{boards(ids:[BOARD_ID_PLACEHOLDER]){items_page(limit:200){items{id name state created_at updated_at column_values{id title text value}}}}}";
   // First try to get board ID from server config
-  var boardId=BOARD_ID;
+  var boardId="4879086777";
   try{
     var cfg=await fetch("/api/config");
     if(cfg.ok){var c=await cfg.json();if(c.boardId)boardId=c.boardId;}
@@ -532,21 +533,7 @@ async function fetchBoard(){
     }
   }catch(e){console.warn("[Monday] Proxy error:",e.message);}
 
-  // Fallback: try direct (works if same-origin or CORS allowed)
-  try{
-    var r2=await fetch("https://api.monday.com/v2",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":MONDAY_KEY,"API-Version":"2024-01"},
-      body:JSON.stringify({query:q})
-    });
-    if(r2.ok){
-      var d2=await r2.json();
-      if(d2&&d2.data&&d2.data.boards&&d2.data.boards[0]){
-        console.log("[Monday] Sincronizado direto:",d2.data.boards[0].items_page.items.length,"itens");
-        return{items:d2.data.boards[0].items_page.items,live:true};
-      }
-    }
-  }catch(e2){console.warn("[Monday] Direct CORS blocked (normal no browser):",e2.message);}
+  // Direct call removed - only proxy works
 
   return{items:null,live:false};
 }
@@ -639,7 +626,7 @@ async function doSync(){
     banner='<div class="sync-banner"><i class="fas fa-check-circle"></i> '+res.items.length+' projetos sincronizados do Monday.com</div>';
   }else{
     S.projects=demoData();
-    banner='<div class="sync-banner warn"><i class="fas fa-exclamation-triangle"></i> Monday.com bloqueado pelo browser (CORS). Dados demo ativos. No servidor Node.js funciona em tempo real.</div>';
+    banner='<div class="sync-banner warn"><i class="fas fa-exclamation-triangle"></i> Erro ao conectar com Monday.com via proxy. Verifique os logs do Railway.</div>';
   }
   var b=document.getElementById("syncBanner");if(b)b.innerHTML=banner;
   document.getElementById("sdot").classList.remove("spin");
