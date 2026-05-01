@@ -356,3 +356,10 @@ body{font-family:'Inter',sans-serif;background:#0F0C29;color:#fff;min-height:100
 .trilha-dropdown:focus{border-color:#A78BFA}
 .trilha-dropdown option{background:#1E1B4B;color:#fff}
 
+
+/* ── QUARTER FILTER ── */
+.q-filter{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.q-filter-label{font-size:12.5px;font-weight:600;color:rgba(255,255,255,.5);white-space:nowrap}
+.q-filter select{padding:8px 14px;border:1.5px solid rgba(255,255,255,.12);border-radius:var(--rs);font-size:13.5px;font-family:'Inter',sans-serif;background:rgba(255,255,255,.07);color:#fff;outline:none;cursor:pointer;transition:.2s}
+.q-filter select:focus{border-color:#A78BFA}
+.q-filter select option{background:#1E1B4B}
