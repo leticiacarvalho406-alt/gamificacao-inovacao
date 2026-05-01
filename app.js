@@ -419,6 +419,7 @@ function refresh(n){
 }
 
 function refreshCurrent(){
+  if(!S.user) return;
   var pg=document.querySelector(".page.act");
   if(pg) refresh(pg.id.replace("p-",""));
 }
@@ -454,6 +455,7 @@ function setQFilter(val){
 
 // ── DASHBOARD ─────────────────────────────────────────────
 function rDash(){
+  if(!S.user) return;
   var role=S.user.role, name=S.user.name;
   var mgr=role==="gerente"||role==="diretor";
   var projs=mgr?S.projects:userProjects(name);
@@ -502,6 +504,7 @@ function rDash(){
 
 // ── TRILHA ────────────────────────────────────────────────
 function rTrilha(){
+  if(!S.user) return;
   var role=S.user.role,name=S.user.name;
   var myProjs=isMgr(name)?S.projects:userProjects(name);
   var wrap=document.getElementById("trilhaWrap");
@@ -629,6 +632,7 @@ function buildRoadmap(proj, role, userName){
 
 // ── PONTOS ────────────────────────────────────────────────
 function rPontos(){
+  if(!S.user) return;
   var role=S.user.role,name=S.user.name;
   var mgr=role==="gerente"||role==="diretor";
   var projs=mgr?S.projects:userProjects(name);
