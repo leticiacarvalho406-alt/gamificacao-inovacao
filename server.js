@@ -18,6 +18,8 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
+
+// Serve all static files from this directory
 app.use(express.static(__dirname));
 
 // ── MONDAY PROXY ──────────────────────────────────
@@ -25,10 +27,9 @@ app.post('/api/monday', (req, res) => {
   const { query } = req.body || {};
   if (!query) return res.status(400).json({ error: 'Query obrigatoria' });
 
-  console.log('[Monday] Recebida query, chamando API...');
-
+  console.log('[Monday] Chamando API...');
   const bodyStr = JSON.stringify({ query });
-  let responded = false; // guard against double-response
+  let responded = false;
 
   const options = {
     hostname: 'api.monday.com',
@@ -52,15 +53,12 @@ app.post('/api/monday', (req, res) => {
       console.log('[Monday] Status:', mondayRes.statusCode, '| Bytes:', data.length);
       try {
         const parsed = JSON.parse(data);
-        if (parsed.errors) {
-          console.error('[Monday] API errors:', JSON.stringify(parsed.errors));
-        } else {
-          const count = parsed?.data?.boards?.[0]?.items_page?.items?.length;
-          console.log('[Monday] OK! Items:', count);
-        }
+        const count = parsed?.data?.boards?.[0]?.items_page?.items?.length;
+        if (count !== undefined) console.log('[Monday] OK! Items:', count);
+        if (parsed.errors) console.error('[Monday] Errors:', JSON.stringify(parsed.errors));
         res.json(parsed);
       } catch (e) {
-        console.error('[Monday] Parse error:', e.message, '| Raw:', data.substring(0, 200));
+        console.error('[Monday] Parse error:', e.message);
         res.status(500).json({ error: 'Parse error', raw: data.substring(0, 100) });
       }
     });
@@ -69,14 +67,13 @@ app.post('/api/monday', (req, res) => {
   mondayReq.on('error', (e) => {
     if (responded) return;
     responded = true;
-    console.error('[Monday] Request error:', e.message);
+    console.error('[Monday] Error:', e.message);
     res.status(500).json({ error: e.message });
   });
 
   mondayReq.setTimeout(20000, () => {
     if (responded) return;
     responded = true;
-    console.error('[Monday] Timeout!');
     mondayReq.destroy();
     res.status(504).json({ error: 'Timeout' });
   });
@@ -85,24 +82,10 @@ app.post('/api/monday', (req, res) => {
   mondayReq.end();
 });
 
-// ── CONFIG ────────────────────────────────────────
-app.get('/api/config', (req, res) => {
-  res.json({ boardId: BOARD_ID, ok: true });
-});
-
-// ── HEALTH ────────────────────────────────────────
-app.get('/health', (req, res) => {
-  res.json({ ok: true, time: new Date().toISOString() });
-});
-
-// ── SPA FALLBACK ──────────────────────────────────
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+app.get('/api/config', (req, res) => res.json({ boardId: BOARD_ID, ok: true }));
+app.get('/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log('\n╔══════════════════════════════════════════╗');
-  console.log('║  🚀 GAMIFICAÇÃO INOVAÇÃO — Online!       ║');
-  console.log(`║  ✅ Porta: ${PORT}                          ║`);
-  console.log('╚══════════════════════════════════════════╝\n');
+  console.log(`\n🚀 Gamificação Inovação — http://localhost:${PORT}\n`);
 });
